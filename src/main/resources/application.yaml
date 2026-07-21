@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: library
+  datasource:
+    url: jdbc:sqlite:C:\Users\eliza\GithubRepos\library\db\library.db
+    driver-class-name: org.sqlite.JDBC
+    username: admin
+    password: password
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
