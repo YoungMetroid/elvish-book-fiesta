@@ -1,6 +1,6 @@
 package com.mangabooks.library.Entity;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -19,7 +19,7 @@ public class BookSeries {
     private String title;
 
     @OneToMany(mappedBy = "series", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonManagedReference(value = "book_series")
     private List<Book> books;
     // Many-to-many with Author
     @ManyToMany
@@ -28,11 +28,11 @@ public class BookSeries {
             joinColumns = @JoinColumn(name = "series_id"),
             inverseJoinColumns = @JoinColumn(name = "author_id")
     )
-    @JsonManagedReference
+    @JsonManagedReference(value = "author_series")
     private List<Author> authors;
 
     @Column(name ="total_volumes")
-    private Byte totalVolumes;
+    private Integer totalVolumes;
 
 
 }

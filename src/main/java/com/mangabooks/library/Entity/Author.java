@@ -18,6 +18,6 @@ public class Author {
     private String name;
 
     @ManyToMany(mappedBy = "authors")
-    @JsonBackReference
+    @JsonBackReference(value = "author_series")
     private List<BookSeries> series;
 }

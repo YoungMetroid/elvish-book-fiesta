@@ -22,7 +22,7 @@ public class Book {
 
     @ManyToOne
     @JoinColumn(name = "series_id")
-    @JsonBackReference
+    @JsonBackReference(value = "book_series")
     private BookSeries series;
 
 

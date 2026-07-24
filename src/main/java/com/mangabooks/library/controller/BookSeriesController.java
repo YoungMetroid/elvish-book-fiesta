@@ -6,9 +6,7 @@ import com.mangabooks.library.dto.BookSeriesRecord;
 import com.mangabooks.library.service.BookSeriesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,7 +23,8 @@ public class BookSeriesController {
 
     @GetMapping
     public ResponseEntity<List<BookSeriesRecord>> getBookSeries(){
-        return ResponseEntity.ok(bookSeriesService.getAllBookSeries());
+        List<BookSeriesRecord> series = bookSeriesService.getAllBookSeries();
+        return ResponseEntity.ok(series);
     }
 
     @GetMapping("/all")
@@ -34,5 +33,9 @@ public class BookSeriesController {
     }
 
 
-
+    @PostMapping("/addBookSeries")
+    public ResponseEntity<BookSeries> addBookSeries(@RequestBody BookSeriesRecord bookSeriesRecord){
+        BookSeries bookSeries = bookSeriesService.addBookSeries(bookSeriesRecord);
+        return ResponseEntity.ok(bookSeries);
+    }
 }
