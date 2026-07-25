@@ -5,6 +5,7 @@ import com.mangabooks.library.Entity.Book;
 import com.mangabooks.library.Entity.BookSeries;
 import com.mangabooks.library.dto.BookRecord;
 import com.mangabooks.library.dto.BookSeriesRecord;
+import com.mangabooks.library.exception.AuthorException;
 import com.mangabooks.library.repository.AuthorRepository;
 import com.mangabooks.library.repository.BookRepository;
 import com.mangabooks.library.repository.BookSeriesRepository;
@@ -76,8 +77,31 @@ public class BookSeriesService {
         }
     }
 
+    public List<Book> addBooksToExistingSeries(List<BookRecord> bookRecordList){
+        List<Book> processedBooks = new ArrayList<>();
+        Optional<BookSeries> bs;
+        for(BookRecord bookRecord : bookRecordList){
+            Optional<Book> bookFound = bookRepository.findFirstBookByNameAndVolume(bookRecord.title()
+                    ,bookRecord.volume());
+            if(!bookFound.isPresent()){
+                bs = bookSeriesRepository.findFirstBookSeriesByName(bookRecord.title());
+                if(bs.isPresent()){
+                    Book b = new Book();
+                    b.setVolume(bookRecord.volume());
+                    b.setTitle(bookRecord.title());
+
+                    b.setSeries(bs.get());
+                    processedBooks.add(b);
+                }
+            }
+        }
+        bookRepository.saveAll(processedBooks);
+    }
     public List<Author> findAuthors(List<String> authorNames){
         List<Author> authorList = new ArrayList<>();
+        if(authorNames.isEmpty()){
+            throw new AuthorException("The author info is missing");
+        }
 
         for(String name:authorNames){
             Optional<Author> a = authorRepository.findByName(name);
@@ -107,11 +131,13 @@ public class BookSeriesService {
             book.setTitle(bookSeries.getTitle());
             book.setVolume((byte) (i+1));
             book.setSeries(bookSeries);
-
             books.add(book);
         }
         bookRepository.saveAll(books);
         return books;
     }
+
+
+
 
 }
