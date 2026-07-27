@@ -53,8 +53,8 @@ public class BookSeriesService {
             if(null !=bookSeriesRecord.title()
                     && !bookSeriesRecord.title().isBlank()
                     && bookSeriesRecord.totalVolumes() > 0) {
-            //Check if the author exist if it does not create the author
-            //Once the author is created get that author list and add it to the bookSeries.
+                //Check if the author exist if it does not create the author
+                //Once the author is created get that author list and add it to the bookSeries.
 
                 BookSeries newBookSeries = new BookSeries();
                 List<String> authorNames = bookSeriesRecord.authors();
@@ -65,11 +65,19 @@ public class BookSeriesService {
                 newBookSeries.setTotalVolumes(bookSeriesRecord.totalVolumes());
                 newBookSeries = bookSeriesRepository.save(newBookSeries);
 
-            //Now create the volumes since you have the series name
-            //The amount of volumes
-            //And the list of authors
-                List<Book> books = createBooks(newBookSeries);
+                //Now create the volumes since you have the series name
+                //The amount of volumes
+                //And the list of authors
+
+                List<Book> books;
+                if(null == bookSeriesRecord.ownedVolumes()){
+                    books = createBooks(newBookSeries);
+                }
+                else {
+                    books = createBooks(newBookSeries, bookSeriesRecord.ownedVolumes());
+                }
                 newBookSeries.setBooks(books);
+
                 return newBookSeries;
             }
             //throw newNotFoundException
@@ -80,22 +88,37 @@ public class BookSeriesService {
     public List<Book> addBooksToExistingSeries(List<BookRecord> bookRecordList){
         List<Book> processedBooks = new ArrayList<>();
         Optional<BookSeries> bs;
+        Book book;
         for(BookRecord bookRecord : bookRecordList){
             Optional<Book> bookFound = bookRepository.findFirstBookByNameAndVolume(bookRecord.title()
                     ,bookRecord.volume());
             if(!bookFound.isPresent()){
+                //Create the book entry if it does not exist
+                //Should not occur very often since when creating the series
+                //It should add all the book entries
                 bs = bookSeriesRepository.findFirstBookSeriesByName(bookRecord.title());
                 if(bs.isPresent()){
-                    Book b = new Book();
-                    b.setVolume(bookRecord.volume());
-                    b.setTitle(bookRecord.title());
-
-                    b.setSeries(bs.get());
-                    processedBooks.add(b);
+                    book = new Book();
+                    book.setVolume(bookRecord.volume());
+                    book.setTitle(bookRecord.title());
+                    String authors = bs.get().getAuthors().stream()
+                            .map(x->x.getName())
+                            .collect(Collectors.joining(", "));
+                    book.setAuthor(authors);
+                    book.setOwned((byte) 1);
+                    book.setSeries(bs.get());
+                    processedBooks.add(book);
                 }
             }
+            else{
+                //This will update the book entry to saying that we own it now.
+                book = bookFound.get();
+                book.setOwned((byte)1);
+                processedBooks.add(book);
+            }
         }
-        bookRepository.saveAll(processedBooks);
+        processedBooks = bookRepository.saveAll(processedBooks);
+        return processedBooks;
     }
     public List<Author> findAuthors(List<String> authorNames){
         List<Author> authorList = new ArrayList<>();
@@ -118,7 +141,6 @@ public class BookSeriesService {
         }
         return authorList;
     }
-
     public List<Book> createBooks(BookSeries bookSeries){
         List<Book> books = new ArrayList<>();
         String authors = bookSeries.getAuthors().stream()
@@ -130,6 +152,24 @@ public class BookSeriesService {
             book.setAuthor(authors);
             book.setTitle(bookSeries.getTitle());
             book.setVolume((byte) (i+1));
+            book.setSeries(bookSeries);
+            book.setOwned((byte)1);
+            books.add(book);
+        }
+        bookRepository.saveAll(books);
+        return books;
+    }
+    public List<Book> createBooks(BookSeries bookSeries, List<Byte> ownedVolumes){
+        List<Book> books = new ArrayList<>();
+        String authors = bookSeries.getAuthors().stream()
+                .map(x->x.getName())
+                .collect(Collectors.joining(", "));
+
+        for(Byte volume : ownedVolumes){
+            Book book = new Book();
+            book.setAuthor(authors);
+            book.setTitle(bookSeries.getTitle());
+            book.setVolume(volume);
             book.setSeries(bookSeries);
             books.add(book);
         }

@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface BookRepository extends JpaRepository<Book,Long> {
 
-    @Query("SELECT b FROM BookSeries b WHERE LOWER(REPLACE(b.title, ' ','')) " +
+    @Query("SELECT b FROM Book b WHERE LOWER(REPLACE(b.title, ' ','')) " +
             "= LOWER(REPLACE(:name, ' ','')) AND b.volume = :volume")
     Optional<Book> findFirstBookByNameAndVolume(@Param("name")String name, @Param("volume") Byte volume);
 }

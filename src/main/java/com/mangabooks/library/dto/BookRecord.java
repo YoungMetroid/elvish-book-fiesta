@@ -4,5 +4,6 @@ public record BookRecord(
         String title
         ,Byte volume
         ,String author
+        ,Boolean owned
 ) {
 }

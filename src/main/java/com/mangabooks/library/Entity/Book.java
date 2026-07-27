@@ -20,6 +20,8 @@ public class Book {
     @Column(length=100)
     private String author;
 
+    private Byte owned;
+
     @ManyToOne
     @JoinColumn(name = "series_id")
     @JsonBackReference(value = "book_series")

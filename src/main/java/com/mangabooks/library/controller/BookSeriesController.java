@@ -1,9 +1,12 @@
 package com.mangabooks.library.controller;
 
 
+import com.mangabooks.library.Entity.Book;
 import com.mangabooks.library.Entity.BookSeries;
+import com.mangabooks.library.dto.BookRecord;
 import com.mangabooks.library.dto.BookSeriesRecord;
 import com.mangabooks.library.service.BookSeriesService;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,4 +41,11 @@ public class BookSeriesController {
         BookSeries bookSeries = bookSeriesService.addBookSeries(bookSeriesRecord);
         return ResponseEntity.ok(bookSeries);
     }
+
+    @PostMapping("/addBooksToExistingSeries")
+    public ResponseEntity<List<Book>> addBooksToExistingSeries(@RequestBody List<BookRecord> bookRecords){
+        List<Book> books = bookSeriesService.addBooksToExistingSeries(bookRecords);
+        return ResponseEntity.ok(books);
+    }
+
 }

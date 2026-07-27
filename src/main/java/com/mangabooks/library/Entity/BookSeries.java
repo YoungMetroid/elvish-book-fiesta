@@ -32,7 +32,7 @@ public class BookSeries {
     private List<Author> authors;
 
     @Column(name ="total_volumes")
-    private Integer totalVolumes;
+    private Byte totalVolumes;
 
 
 }
