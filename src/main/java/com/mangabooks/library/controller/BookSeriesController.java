@@ -36,9 +36,15 @@ public class BookSeriesController {
     }
 
 
-    @PostMapping("/addBookSeriesLov")
-    public ResponseEntity<BookSeries> addBookSeriesListOfVolumes(@RequestBody BookSeriesRecord bookSeriesRecord){
-        BookSeries bookSeries = bookSeriesService.addBookSeriesListofVolumes(bookSeriesRecord);
+    @PostMapping("/addBookSeriesByLov")
+    public ResponseEntity<BookSeries> addBookSeriesByListOfVolumes(@RequestBody BookSeriesRecord bookSeriesRecord){
+        BookSeries bookSeries = bookSeriesService.addBookSeriesByVolumeList(bookSeriesRecord);
+        return ResponseEntity.ok(bookSeries);
+    }
+
+    @PostMapping("/addBookSeriesByRange")
+    public ResponseEntity<BookSeries> addBookSeriesByRange(@RequestBody BookSeriesRecord bookSeriesRecord){
+        BookSeries bookSeries = bookSeriesService.addBookSeriesByRange(bookSeriesRecord);
         return ResponseEntity.ok(bookSeries);
     }
 

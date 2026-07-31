@@ -11,6 +11,7 @@ import com.mangabooks.library.repository.AuthorRepository;
 import com.mangabooks.library.repository.BookRepository;
 import com.mangabooks.library.repository.BookSeriesRepository;
 
+import lombok.Lombok;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -68,13 +69,18 @@ public class BookSeriesService {
         }
 
         if(BookSeriesPayLoadType.VolumeList.equals(payLoadType)
-                && null != bsr.ownedVolumes()){
+                && null != bsr.ownedVolumes()
+                && !bsr.ownedVolumes().isEmpty()
+        ){
             return true;
         }
 
         if(BookSeriesPayLoadType.VolumeRange.equals(payLoadType)
                 && null !=bsr.startOwnedVolume()
-                && null != bsr.endOwnedVolume()){
+                && null != bsr.endOwnedVolume()
+                && bsr.startOwnedVolume() > 0
+                && bsr.endOwnedVolume() > 0
+        ){
             return true;
         }
 
@@ -93,14 +99,7 @@ public class BookSeriesService {
                 return bookSeriesExist.get();
             }
             else{
-                List<String> authorNames = bsr.authors();
-                List<Author>authors = findAuthors(authorNames);
-
-                newBookSeries.setAuthors(authors);
-                newBookSeries.setTitle(bsr.title());
-                newBookSeries.setTotalVolumes(bsr.totalVolumes());
-                newBookSeries = bookSeriesRepository.save(newBookSeries);
-
+                newBookSeries = createBookSeries(bsr);
                 List<Book> bookList = createBooks(newBookSeries,0);
                 newBookSeries.setBooks(bookList);
             }
@@ -108,28 +107,39 @@ public class BookSeriesService {
         return newBookSeries;
     }
 
-    public BookSeries addBookSeriesListofVolumes(BookSeriesRecord bsr){
-        BookSeries newBookSeries = new BookSeries();
-        if(isBookSeriesPayLoadOk(bsr,BookSeriesPayLoadType.NoVolumes)){
+    public BookSeries addBookSeriesByVolumeList(BookSeriesRecord bsr){
+        if(isBookSeriesPayLoadOk(bsr,BookSeriesPayLoadType.VolumeList)){
             Optional<BookSeries> bookSeriesExist = bookSeriesRepository.findFirstBookSeriesByName(bsr.title());
             if(bookSeriesExist.isPresent()){
                 return bookSeriesExist.get();
             }
             else{
-                List<String> authorNames = bsr.authors();
-                List<Author>authors = findAuthors(authorNames);
-
-                newBookSeries.setAuthors(authors);
-                newBookSeries.setTitle(bsr.title());
-                newBookSeries.setTotalVolumes(bsr.totalVolumes());
-                newBookSeries = bookSeriesRepository.save(newBookSeries);
-
+                BookSeries newBookSeries = createBookSeries(bsr);
                 List<Book> bookList = createBooks(newBookSeries,0);
                 bookList = createBooks(bookList, bsr.ownedVolumes());
                 newBookSeries.setBooks(bookList);
+                return newBookSeries;
             }
         }
-        return newBookSeries;
+        throw new ResourceNotFoundException("The start/end volumes owned is either null or less than 1");
+    }
+
+    public BookSeries addBookSeriesByRange(BookSeriesRecord bsr){
+        if(isBookSeriesPayLoadOk(bsr,BookSeriesPayLoadType.VolumeRange)){
+            Optional<BookSeries> bookSeriesExist = bookSeriesRepository.findFirstBookSeriesByName(bsr.title());
+            if(bookSeriesExist.isPresent()){
+                return bookSeriesExist.get();
+            }
+            else{
+                BookSeries newBookSeries = createBookSeries(bsr);
+                List<Book> bookList = createBooks(newBookSeries
+                        ,bsr.startOwnedVolume()
+                        ,bsr.endOwnedVolume());
+                newBookSeries.setBooks(bookList);
+                return newBookSeries;
+            }
+        }
+        throw new ResourceNotFoundException("The Owned Books List is null or empty");
     }
 
     /*
@@ -284,6 +294,18 @@ public class BookSeriesService {
         }
         books = bookRepository.saveAll(books);
         return books;
+    }
+
+    public BookSeries createBookSeries( BookSeriesRecord bsr){
+        BookSeries newBookSeries = new BookSeries();
+        List<String> authorNames = bsr.authors();
+        List<Author>authors = findAuthors(authorNames);
+
+        newBookSeries.setAuthors(authors);
+        newBookSeries.setTitle(bsr.title());
+        newBookSeries.setTotalVolumes(bsr.totalVolumes());
+        newBookSeries = bookSeriesRepository.save(newBookSeries);
+        return newBookSeries;
     }
 
     public String getConcatenatedAuthors(List<Author> authorList){
