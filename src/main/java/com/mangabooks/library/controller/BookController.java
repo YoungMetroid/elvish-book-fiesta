@@ -34,7 +34,7 @@ public class BookController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Book> getBooksByAuthor(@RequestParam String title, @RequestParam Byte volume){
+    public ResponseEntity<Book> getBooksByNameAndVolume(@RequestParam String title, @RequestParam Byte volume){
         Book book = bookService.getBookByNameAndVolume(title,volume);
         return ResponseEntity.ok(book);
     }

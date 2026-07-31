@@ -36,9 +36,9 @@ public class BookSeriesController {
     }
 
 
-    @PostMapping("/addBookSeries")
-    public ResponseEntity<BookSeries> addBookSeries(@RequestBody BookSeriesRecord bookSeriesRecord){
-        BookSeries bookSeries = bookSeriesService.addBookSeries(bookSeriesRecord);
+    @PostMapping("/addBookSeriesLov")
+    public ResponseEntity<BookSeries> addBookSeriesListOfVolumes(@RequestBody BookSeriesRecord bookSeriesRecord){
+        BookSeries bookSeries = bookSeriesService.addBookSeriesListofVolumes(bookSeriesRecord);
         return ResponseEntity.ok(bookSeries);
     }
 
