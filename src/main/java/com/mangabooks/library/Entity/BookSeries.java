@@ -18,6 +18,12 @@ public class BookSeries {
     @Column(length=100)
     private String title;
 
+    @Column(length=100)
+    private String publisher;
+
+    @Column(length=100, name="publisher_original")
+    private String publisherOriginal;
+
     @OneToMany(mappedBy = "series", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "book_series")
     private List<Book> books;

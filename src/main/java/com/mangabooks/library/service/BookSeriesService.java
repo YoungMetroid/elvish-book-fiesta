@@ -11,11 +11,10 @@ import com.mangabooks.library.repository.AuthorRepository;
 import com.mangabooks.library.repository.BookRepository;
 import com.mangabooks.library.repository.BookSeriesRepository;
 
-import lombok.Lombok;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.Transactional;
+
 
 
 import java.util.ArrayList;
@@ -142,56 +141,6 @@ public class BookSeriesService {
         throw new ResourceNotFoundException("The Owned Books List is null or empty");
     }
 
-    /*
-    public BookSeries addBookSeries(BookSeriesRecord bookSeriesRecord){
-        Optional<BookSeries> bookSeriesExist = bookSeriesRepository.findFirstBookSeriesByName(bookSeriesRecord.title());
-        if(bookSeriesExist.isPresent()){
-            return bookSeriesExist.get();
-        }
-        else{
-            if(null !=bookSeriesRecord.title()
-                    && !bookSeriesRecord.title().isBlank()
-                    && bookSeriesRecord.totalVolumes() > 0) {
-                //Check if the author exist if it does not create the author
-                //Once the author is created get that author list and add it to the bookSeries.
-
-                BookSeries newBookSeries = new BookSeries();
-                List<String> authorNames = bookSeriesRecord.authors();
-                List<Author>authors = findAuthors(authorNames);
-
-                newBookSeries.setAuthors(authors);
-                newBookSeries.setTitle(bookSeriesRecord.title());
-                newBookSeries.setTotalVolumes(bookSeriesRecord.totalVolumes());
-                newBookSeries = bookSeriesRepository.save(newBookSeries);
-
-                //Now create the volumes since you have the series name
-                //The amount of volumes
-                //And the list of authors
-
-                List<Book> books;
-                //ownedVolumes has to be null and the startowned as well
-                if(null == bookSeriesRecord.ownedVolumes() && null == bookSeriesRecord.startOwnedVolume()){
-                    books = createBooks(newBookSeries,1);
-                }
-                //if start owned is filled out then create books in the range
-                else if(null != bookSeriesRecord.startOwnedVolume() && null != bookSeriesRecord.endOwnedVolume()){
-                    books = createBooks(newBookSeries
-                            ,bookSeriesRecord.startOwnedVolume()
-                            ,bookSeriesRecord.endOwnedVolume());
-                }
-                //if ownedVolumes List is filled out then create those books
-                else {
-                    books = createBooks(newBookSeries, bookSeriesRecord.ownedVolumes());
-                }
-                newBookSeries.setBooks(books);
-
-                return newBookSeries;
-            }
-            return null;
-        }
-    }
-    */
-
     public List<Book> addBooksToExistingSeries(List<BookRecord> bookRecordList){
         List<Book> processedBooks = new ArrayList<>();
         Optional<BookSeries> bs;
@@ -304,6 +253,8 @@ public class BookSeriesService {
         newBookSeries.setAuthors(authors);
         newBookSeries.setTitle(bsr.title());
         newBookSeries.setTotalVolumes(bsr.totalVolumes());
+        newBookSeries.setPublisher(bsr.publisher());
+        newBookSeries.setPublisherOriginal(bsr.publisherOriginal());
         newBookSeries = bookSeriesRepository.save(newBookSeries);
         return newBookSeries;
     }
