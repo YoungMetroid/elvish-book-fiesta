@@ -7,6 +7,7 @@ import com.mangabooks.library.dto.BookRecord;
 import com.mangabooks.library.dto.BookSeriesRecord;
 import com.mangabooks.library.exception.AuthorException;
 import com.mangabooks.library.exception.ResourceNotFoundException;
+import com.mangabooks.library.exception.VolumeException;
 import com.mangabooks.library.repository.AuthorRepository;
 import com.mangabooks.library.repository.BookRepository;
 import com.mangabooks.library.repository.BookSeriesRepository;
@@ -16,11 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -55,6 +52,11 @@ public class BookSeriesService {
 
     public List<BookSeries> getAll(){
         return this.bookSeriesRepository.findAll();
+    }
+
+    public List<BookSeries> searchBookSeries(String title){
+        List<BookSeries> bs = bookSeriesRepository.findBookSeriesByName(title);
+        return bs;
     }
 
     public boolean isBookSeriesPayLoadOk(BookSeriesRecord bsr, BookSeriesPayLoadType payLoadType){
@@ -138,14 +140,14 @@ public class BookSeriesService {
                 return newBookSeries;
             }
         }
-        throw new ResourceNotFoundException("The Owned Books List is null or empty");
+        throw new ResourceNotFoundException("The startOwnedVolume or endOwnedVolume is either null or empty");
     }
 
     public List<Book> addBooksToExistingSeries(List<BookRecord> bookRecordList){
         List<Book> processedBooks = new ArrayList<>();
         Optional<BookSeries> bs;
-        Book book;
         for(BookRecord bookRecord : bookRecordList){
+            Book book;
             Optional<Book> bookFound = bookRepository.findFirstBookByNameAndVolume(bookRecord.title()
                     ,bookRecord.volume());
             if(!bookFound.isPresent()){
@@ -176,12 +178,46 @@ public class BookSeriesService {
         processedBooks = bookRepository.saveAll(processedBooks);
         return processedBooks;
     }
+    public List<Book> addBooksToExistingSeriesByBookSeriesId(List<BookRecord> bookRecordList){
+        List<Book> processedBooks = new ArrayList<>();
+        Optional<BookSeries> bs;
+        for(BookRecord bookRecord : bookRecordList){
+
+            bs  = bookSeriesRepository.findById(bookRecord.seriesId());
+            if(bs.isPresent()){
+                Book book;
+                List<Book> books = bs.get().getBooks();
+                Optional<Book>optionalBook = books.stream()
+                        .filter(x -> x.getVolume().equals(bookRecord.volume()))
+                        .findFirst();
+                if(optionalBook.isPresent()){
+                    book = optionalBook.get();
+                    book.setOwned((byte)1);
+                    processedBooks.add(book);
+                }
+                else{
+                    book = new Book();
+                    book.setVolume(bookRecord.volume());
+                    book.setTitle(bookRecord.title());
+                    String authors = bs.get().getAuthors().stream()
+                            .map(x->x.getName())
+                            .collect(Collectors.joining(", "));
+                    book.setAuthor(authors);
+                    book.setOwned((byte) 1);
+                    book.setSeries(bs.get());
+                    processedBooks.add(book);
+                }
+            }
+        }
+        processedBooks = bookRepository.saveAll(processedBooks);
+        return processedBooks;
+    }
     public List<Author> findAuthors(List<String> authorNames){
-        List<Author> authorList = new ArrayList<>();
         if(authorNames.isEmpty()){
-            throw new AuthorException("The author info is missing");
+            throw new AuthorException("The author List is Empty");
         }
 
+        List<Author> authorList = new ArrayList<>();
         for(String name:authorNames){
             Optional<Author> a = authorRepository.findByName(name);
             if(a.isPresent()){
@@ -229,7 +265,7 @@ public class BookSeriesService {
         return bookList;
     }
     public List<Book> createBooks(BookSeries bookSeries, Byte startVolume, Byte endVolume){
-        List<Book> books = new ArrayList<>();
+        List<Book> bookList = new ArrayList<>();
         String authors = getConcatenatedAuthors(bookSeries.getAuthors());
 
         for(Byte i =0; i < bookSeries.getTotalVolumes(); i++){
@@ -239,10 +275,26 @@ public class BookSeriesService {
             book.setVolume((byte) (i+1));
             book.setSeries(bookSeries);
             book.setOwned(i+1 >= startVolume && i+1 <= endVolume ? (byte)1 :(byte)0);
-            books.add(book);
+            bookList.add(book);
         }
-        books = bookRepository.saveAll(books);
-        return books;
+        bookList = bookRepository.saveAll(bookList);
+        return bookList;
+    }
+    public List<Book> createBooksByRange(BookSeries bookSeries, Byte lastVolume){
+        List<Book> bookList = new ArrayList<>();
+        String authors = getConcatenatedAuthors(bookSeries.getAuthors());
+        lastVolume++;
+        for(; lastVolume <= bookSeries.getTotalVolumes(); lastVolume++){
+            Book book = new Book();
+            book.setAuthor(authors);
+            book.setTitle(bookSeries.getTitle());
+            book.setVolume(lastVolume);
+            book.setSeries(bookSeries);
+            book.setOwned((byte)0);
+            bookList.add(book);
+        }
+        bookList = bookRepository.saveAll(bookList);
+        return bookList;
     }
 
     public BookSeries createBookSeries( BookSeriesRecord bsr){
@@ -266,7 +318,67 @@ public class BookSeriesService {
         return authors;
     }
 
+    public List<Book> addMissingVolumeEntriesToAllSeries(){
+        List<BookSeries> bookSeries = bookSeriesRepository.findAll();
+        List<Book> missingBooks = new ArrayList<>();
+        for(BookSeries bs :bookSeries){
+            List<Book> mbps = getMissingBooksPerSeries(bs);
+            missingBooks.addAll(mbps);
+        }
+        missingBooks = bookRepository.saveAll(missingBooks);
+        return missingBooks;
+    }
+
+    private List<Book> getMissingBooksPerSeries(BookSeries bs){
+        List<Book> books = bookRepository.findBySeriesId(bs.getId());
+        books = books.stream()
+                .sorted(Comparator.comparing(Book::getVolume))
+                .collect(Collectors.toList());
+
+        if(books.isEmpty()){
+            return Collections.emptyList();
+        }
+
+        List<Book> missingBooks = new ArrayList<>();
+        Book newBook = new Book();
+        int j = 0;
+        newBook.setAuthor(books.getFirst().getAuthor());
+        newBook.setTitle(books.getFirst().getTitle());
+        newBook.setSeries(bs);
+        newBook.setOwned((byte)0);
+
+        for(int i = 0; i < bs.getTotalVolumes(); i++){
+            if(j < books.size() && books.get(j).getVolume() == i+1){
+                j++;
+            }
+            else{
+                newBook.setVolume((byte)(i+1));
+                missingBooks.add(new Book(newBook));
+            }
+        }
+        return missingBooks;
+    }
 
 
+    public List<Book> updateVolumeCountAndAddVolumeEntries(List<BookSeriesRecord> bsrList){
 
+        List<BookSeries> bookSeriesList = new ArrayList<>();
+        List<Book> bookList = new ArrayList<>();
+        for(BookSeriesRecord bookSeriesRecord: bsrList){
+            Optional<BookSeries> obs = bookSeriesRepository.findById(bookSeriesRecord.id());
+            if(obs.isPresent()){
+                BookSeries bs = obs.get();
+                if(bs.getTotalVolumes() <= bookSeriesRecord.totalVolumes() ){
+                    throw new VolumeException("");
+                }
+                byte lastVolume = bs.getTotalVolumes();
+                bs.setTotalVolumes(bookSeriesRecord.totalVolumes());
+                bookSeriesList.add(bs);
+                List<Book> newBooks = createBooksByRange(bs,lastVolume);
+                bookList.addAll(newBooks);
+            }
+        }
+        bookSeriesRepository.saveAll(bookSeriesList);
+        return bookList;
+    }
 }

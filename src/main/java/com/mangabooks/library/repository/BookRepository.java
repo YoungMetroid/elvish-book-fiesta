@@ -13,12 +13,23 @@ public interface BookRepository extends JpaRepository<Book,Long> {
 
     @Query("SELECT b FROM Book b WHERE LOWER(REPLACE(b.title, ' ','')) " +
             "= LOWER(REPLACE(:name, ' ','')) AND b.volume = :volume")
-    Optional<Book> findFirstBookByNameAndVolume(@Param("name")String name, @Param("volume") Byte volume);
+    Optional<Book> findFirstBookByNameAndVolume(
+            @Param("name")String name,
+            @Param("volume") Byte volume);
+
+    @Query("SELECT b from Book b WHERE LOWER(REPLACE(b.title, ' ','')) "+
+            "LIKE LOWER(CONCAT('%', REPLACE(:name, ' ',''), '%')) " +
+            "AND b.volume = :volume")
+    List<Book> findBooksByNameAndVolume(
+            @Param("name")String name,
+            @Param("volume") Byte volume);
 
     @Query("SELECT b FROM Book b WHERE LOWER(REPLACE(b.title, ' ','')) " +
             "= LOWER(REPLACE(:name, ' ',''))" )
     List<Book> findByName(@Param("name")String name);
 
+    @Query("SELECT b FROM Book b WHERE b.series.id = :series_id")
+    List<Book> findBySeriesId(@Param("series_id") Long series_id);
 
     @Modifying
     @Query("UPDATE Book b SET b.owned = 1 WHERE b.title = :name AND b.volume BETWEEN :start AND :end")

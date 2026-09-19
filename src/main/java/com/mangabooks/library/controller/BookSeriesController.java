@@ -6,6 +6,7 @@ import com.mangabooks.library.Entity.BookSeries;
 import com.mangabooks.library.dto.BookRecord;
 import com.mangabooks.library.dto.BookSeriesRecord;
 import com.mangabooks.library.service.BookSeriesService;
+import jakarta.validation.Valid;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,11 @@ public class BookSeriesController {
         return ResponseEntity.ok(bookSeriesService.getAll());
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<BookSeries>> searchBookSeries(@RequestParam String title){
+        List<BookSeries> series = bookSeriesService.searchBookSeries(title);
+        return ResponseEntity.ok(series);
+    }
 
     @PostMapping("/addBookSeriesByLov")
     public ResponseEntity<BookSeries> addBookSeriesByListOfVolumes(@RequestBody BookSeriesRecord bookSeriesRecord){
@@ -51,6 +57,25 @@ public class BookSeriesController {
     @PostMapping("/addBooksToExistingSeries")
     public ResponseEntity<List<Book>> addBooksToExistingSeries(@RequestBody List<BookRecord> bookRecords){
         List<Book> books = bookSeriesService.addBooksToExistingSeries(bookRecords);
+        return ResponseEntity.ok(books);
+    }
+
+    @PostMapping("/addBooksToExistingSeriesBySeriesId")
+    public ResponseEntity<List<Book>> addBooksToExistingSeriesBySeriesId(@RequestBody List<BookRecord> bookRecords){
+        List<Book> books = bookSeriesService.addBooksToExistingSeriesByBookSeriesId(bookRecords);
+        return ResponseEntity.ok(books);
+    }
+
+
+    @PostMapping("/addMissingVolumeEntriesToAllSeries")
+    public ResponseEntity<List<Book>> addMissingVolumeEntriesToAllSeries(){
+        List<Book> books = bookSeriesService.addMissingVolumeEntriesToAllSeries();
+        return ResponseEntity.ok(books);
+    }
+
+    @PutMapping("/udpateVolumeCountAndAddVolumeEntries")
+    public ResponseEntity<List<Book>> updateVolumeCount(@RequestBody @Valid List<BookSeriesRecord> bsr){
+        List<Book> books = bookSeriesService.updateVolumeCountAndAddVolumeEntries(bsr);
         return ResponseEntity.ok(books);
     }
 

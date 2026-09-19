@@ -22,16 +22,19 @@ public class BookService {
     }
 
     public Book getBookById(Long id){
+
         Book book = bookRepository
                 .findById(id)
-                .orElseThrow(()->new ResourceNotFoundException("Book not found with id: " + id));
+                .orElseThrow(()->new ResourceNotFoundException(
+                        String.format("Book with id: %d not found",id)));
         return book;
     }
     public Book getBookByNameAndVolume(String title, Byte volume){
         Book book = bookRepository
                 .findFirstBookByNameAndVolume(title,volume)
-                .orElseThrow(()->new ResourceNotFoundException("Book " + title + " volume: " +
-                        volume + " not found"));
+                .orElseThrow(()->new ResourceNotFoundException(
+                        String.format("Book: %s volume: %d not found", title, volume)));
+
         return book;
     }
 }

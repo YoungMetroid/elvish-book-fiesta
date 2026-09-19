@@ -17,7 +17,7 @@ public class GlobalExceptionHandler extends RuntimeException{
         ApiError error = new ApiError(
                 LocalDateTime.now()
                 , HttpStatus.UNPROCESSABLE_CONTENT.value()
-                ,"Missing Authors"
+                ,"Author Exception"
                 ,ex.getMessage()
                 ,request.getRequestURI());
         return ResponseEntity.unprocessableContent().body(error);
@@ -30,6 +30,18 @@ public class GlobalExceptionHandler extends RuntimeException{
                 LocalDateTime.now()
                 , HttpStatus.NOT_FOUND.value()
                 ,"Resource Not Found"
+                ,ex.getMessage()
+                ,request.getRequestURI());
+        return ResponseEntity.unprocessableContent().body(error);
+    }
+
+    @ExceptionHandler(VolumeException.class)
+    public ResponseEntity<ApiError> volumeException(VolumeException ex
+            , HttpServletRequest request){
+        ApiError error = new ApiError(
+                LocalDateTime.now()
+                , HttpStatus.NOT_FOUND.value()
+                ,"Volume Exception"
                 ,ex.getMessage()
                 ,request.getRequestURI());
         return ResponseEntity.unprocessableContent().body(error);

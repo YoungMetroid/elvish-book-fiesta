@@ -27,5 +27,16 @@ public class Book {
     @JsonBackReference(value = "book_series")
     private BookSeries series;
 
+    public Book(){
+
+    }
+    public Book(Book newBook){
+        this.title = newBook.title;
+        this.volume = newBook.volume;
+        this.author = newBook.author;
+        this.owned = newBook.owned;
+        this.series = newBook.series;
+    }
+
 
 }

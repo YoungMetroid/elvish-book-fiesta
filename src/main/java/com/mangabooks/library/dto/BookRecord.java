@@ -5,5 +5,6 @@ public record BookRecord(
         ,Byte volume
         ,String author
         ,Boolean owned
+         ,Long seriesId
 ) {
 }
